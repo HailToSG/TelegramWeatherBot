@@ -6,14 +6,24 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Egor
- * This class is Telegram bot for getting weather info from Telegram api
+ * Класс бота для получения данных о погоде
  */
 public class WeatherBot extends TelegramLongPollingBot {
+    private Map<String, String> existingRequests = new HashMap<>();
+
     public static void main(String[] args) {
         System.getProperties().put("proxySet", "true");
         System.getProperties().put("socksProxyHost", "127.0.0.1");
@@ -34,22 +44,54 @@ public class WeatherBot extends TelegramLongPollingBot {
      * @see org.telegram.telegrambots.meta.generics.LongPollingBot
      */
     public void onUpdateReceived(Update update) {
+        SendMessage sendMessageService = new SendMessage();
         Message message = update.getMessage();
-        if(message != null && message.hasText()){
-            String command = message.getText();
-            switch (command){
-                case "/help": answer(message, "Чем я могу помочь?");
-                    break;
-                case "/settings": answer(message, "Выберите настройку");
-                    break;
-                default : answer (message, "Команда неизвестна");
-                    break;
-            }
-        }
+        createButtons(sendMessageService);
 
+        existingRequests.put("/help", "Чем я могу помочь?");
+        existingRequests.put("/settings", "Выберите настройку");
+
+        if(message != null && message.hasText()){
+            processTextCommand(message);
+        }
+        }
+    /**
+     * Обрабатывает команды, содержащие текст
+     */
+    private void processTextCommand(Message message) {
+        String command = message.getText();
+        answer(message, existingRequests.get(command));
     }
 
+    /**
+     * Создаёт кнопки чата на основе текста опознаваемых реквестов
+     * @param sendMessageService
+     */
+    private void createButtons(SendMessage sendMessageService){
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        List<KeyboardRow> keyboard = new ArrayList<>();
+        KeyboardRow firstRow = new KeyboardRow();
+
+        firstRow.forEach(row->firstRow.add(
+                new KeyboardButton(existingRequests.keySet().iterator().next())));
+        keyboard.add(firstRow);
+
+        keyboardMarkup.setSelective(true)
+                 .setResizeKeyboard(true)
+                 .setOneTimeKeyboard(false)
+                 .setKeyboard(keyboard);
+        sendMessageService.setReplyMarkup(keyboardMarkup);
+    }
+
+    /**
+     * Посылает в чат ответ на принятый от пользователя запрос запрос
+     * @param message принятый объект сообщения запроса
+     * @param answer строка, посылаемая в ответ на запрос
+     */
     private void answer(Message message, String answer) {
+        if(answer == null) {
+            answer = "Неизвестная команда";
+        }
         SendMessage answerMessage = createAnswer(message, answer);
         sendAnswer(answerMessage);
     }
@@ -61,23 +103,33 @@ public class WeatherBot extends TelegramLongPollingBot {
         return "WeatherBuddyBot";
     }
     /**
-     * @author Egor
      * Возвращает токен
      */
     public String getBotToken() {
         return "841317489:AAHl_I3RhOZ_EWF-r5dmb-L_qrunA1rkugA";
     }
 
-    private void sendAnswer(SendMessage sendMessage) {
+    /**
+     * Посылает ответ в чат
+     * @param sendMessageService
+     */
+    private void sendAnswer(SendMessage sendMessageService) {
         try {
-            execute(sendMessage);
+            execute(sendMessageService);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     *
+     * @param message
+     * @param answerText
+     * @return
+     */
     private SendMessage createAnswer (Message message, String answerText) {
         SendMessage sendMessage = new SendMessage();
+        createButtons(sendMessage);
         sendMessage.enableMarkdown (true);
         sendMessage.setChatId(message.getChatId().toString());
         sendMessage.setReplyToMessageId(message.getMessageId());
