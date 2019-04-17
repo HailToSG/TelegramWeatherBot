@@ -50,12 +50,8 @@ public class WeatherBot extends TelegramLongPollingBot {
     }
 
     private void answer(Message message, String answer) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.enableMarkdown(true);
-        sendMessage.setChatId(message.getChatId().toString());
-        sendMessage.setReplyToMessageId(message.getMessageId());
-        sendMessage.setText(answer);
-        sendAnswer(message, sendMessage);
+        SendMessage answerMessage = createAnswer(message, answer);
+        sendAnswer(answerMessage);
     }
 
     /**
@@ -72,14 +68,20 @@ public class WeatherBot extends TelegramLongPollingBot {
         return "841317489:AAHl_I3RhOZ_EWF-r5dmb-L_qrunA1rkugA";
     }
 
-    private void sendAnswer(Message message, SendMessage sendMessage) {
+    private void sendAnswer(SendMessage sendMessage) {
         try {
-            execute(sendMessage.setText(
-                    message.getText()
-                    +" -> "
-                    +sendMessage.getText()));
+            execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+    }
+
+    private SendMessage createAnswer (Message message, String answerText) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.enableMarkdown (true);
+        sendMessage.setChatId(message.getChatId().toString());
+        sendMessage.setReplyToMessageId(message.getMessageId());
+        sendMessage.setText(answerText);
+        return sendMessage;
     }
 }
