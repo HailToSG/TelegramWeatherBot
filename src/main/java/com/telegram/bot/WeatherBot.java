@@ -12,22 +12,20 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Egor
- * Класс бота для получения данных о погоде
+ * Класс бота для получения погодных данных
  */
 public class WeatherBot extends TelegramLongPollingBot {
     private Map<String, String> existingRequests = new HashMap<>();
+    private Properties tokens =
+            new PropertiesService("tokens.properties")
+                   .getProperties();
 
     public static void main(String[] args) {
-        System.getProperties().put("proxySet", "true");
-        System.getProperties().put("socksProxyHost", "127.0.0.1");
-        System.getProperties().put("socksProxyPort", "9150");
+        SetSystemSettings();
 
         ApiContextInitializer.init();
         TelegramBotsApi botApi = new TelegramBotsApi();
@@ -39,18 +37,23 @@ public class WeatherBot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Устанавливает прокси для соединения с Telegram Api.
+     * Работает только если включен Tor Browser
+     */
+    private static void SetSystemSettings() {
+        System.getProperties().put("proxySet", "true");
+        System.getProperties().put("socksProxyHost", "127.0.0.1");
+        System.getProperties().put("socksProxyPort", "9150");
+    }
+
     /**
      * Метод для приёма обновлений через LongPull
      * @see org.telegram.telegrambots.meta.generics.LongPollingBot
      */
     public void onUpdateReceived(Update update) {
-        SendMessage sendMessageService = new SendMessage();
         Message message = update.getMessage();
-        createButtons(sendMessageService);
-
-        existingRequests.put("/help", "Чем я могу помочь?");
-        existingRequests.put("/settings", "Выберите настройку");
-
         if(message != null && message.hasText()){
             processTextCommand(message);
         }
@@ -59,21 +62,22 @@ public class WeatherBot extends TelegramLongPollingBot {
      * Обрабатывает команды, содержащие текст
      */
     private void processTextCommand(Message message) {
+        initKnownRequests(existingRequests);
         String command = message.getText();
         answer(message, existingRequests.get(command));
     }
 
     /**
      * Создаёт кнопки чата на основе текста опознаваемых реквестов
-     * @param sendMessageService
+     * @param sendMessageService сервис оптправки ответов в чат
      */
     private void createButtons(SendMessage sendMessageService){
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         List<KeyboardRow> keyboard = new ArrayList<>();
         KeyboardRow firstRow = new KeyboardRow();
 
-        firstRow.forEach(row->firstRow.add(
-                new KeyboardButton(existingRequests.keySet().iterator().next())));
+        existingRequests.forEach((s, s2)->
+                firstRow.add(new KeyboardButton(s)));
         keyboard.add(firstRow);
 
         keyboardMarkup.setSelective(true)
@@ -97,21 +101,24 @@ public class WeatherBot extends TelegramLongPollingBot {
     }
 
     /**
-     * Возвращает имя бота, указанного при регистрации
+     * Получает имя бота
+     * @return имя зарегистрированного бота
      */
     public String getBotUsername() {
         return "WeatherBuddyBot";
     }
+
     /**
-     * Возвращает токен
+     * Получает токен
+     * @return токен от Telegram Api
      */
     public String getBotToken() {
-        return "841317489:AAHl_I3RhOZ_EWF-r5dmb-L_qrunA1rkugA";
+        return tokens.getProperty("telegram.token");
     }
 
     /**
      * Посылает ответ в чат
-     * @param sendMessageService
+     * @param sendMessageService сервис отправки ответов
      */
     private void sendAnswer(SendMessage sendMessageService) {
         try {
@@ -122,18 +129,27 @@ public class WeatherBot extends TelegramLongPollingBot {
     }
 
     /**
-     *
-     * @param message
-     * @param answerText
-     * @return
+     * Создаёт ответ в чат на основе параметров запроса
+     * @param message объект принимаемого запроса
+     * @param answerText текст получаемого пользователем ответа
+     * @return модифицированный объект сервиса отправки ответа
      */
     private SendMessage createAnswer (Message message, String answerText) {
-        SendMessage sendMessage = new SendMessage();
-        createButtons(sendMessage);
-        sendMessage.enableMarkdown (true);
-        sendMessage.setChatId(message.getChatId().toString());
-        sendMessage.setReplyToMessageId(message.getMessageId());
-        sendMessage.setText(answerText);
-        return sendMessage;
+        SendMessage sendMessageService = new SendMessage();
+        sendMessageService.enableMarkdown(true)
+                .setChatId(message.getChatId().toString())
+                .setReplyToMessageId(message.getMessageId())
+                .setText(answerText);
+        createButtons(sendMessageService);
+        return sendMessageService;
+    }
+
+    /**
+     * Инициализирует Map обрабатываемых запросов
+     * @param existingRequests Map обрабатываемых запросов
+     */
+    private void initKnownRequests (Map<String, String> existingRequests){
+        existingRequests.put("/help", "Чем я могу помочь?");
+        existingRequests.put("/settings", "Выберите настройку");
     }
 }
