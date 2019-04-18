@@ -12,16 +12,7 @@ import java.util.Properties;
  * Класс для получение проперти из файлов *.properties
  */
 class PropertiesService {
-   private String fileLocation;
-   private Properties properties;
-
-    public String getFileLocation() {
-        return fileLocation;
-    }
-
-    public void setFileLocation(String fileLocation) {
-        this.fileLocation = fileLocation;
-    }
+    private Properties properties;
 
     Properties getProperties() {
         return properties;
@@ -32,8 +23,7 @@ class PropertiesService {
     }
 
     PropertiesService(String filePath) {
-        fileLocation = filePath;
-        properties = getProperties(fileLocation);
+        properties = getProperties(filePath);
     }
 
     /**

@@ -19,8 +19,9 @@ import java.util.*;
  * Класс бота для получения погодных данных
  */
 public class WeatherBot extends TelegramLongPollingBot {
-    private Properties knownRequests = new PropertiesService("known.requests.properties")
-            .getProperties();
+    private Properties knownRequests =
+            new PropertiesService("known.requests.properties")
+                   .getProperties();
     private Properties tokens =
             new PropertiesService("tokens.properties")
                    .getProperties();
@@ -75,14 +76,14 @@ public class WeatherBot extends TelegramLongPollingBot {
         List<KeyboardRow> keyboard = new ArrayList<>();
         KeyboardRow firstRow = new KeyboardRow();
 
-        knownRequests.stringPropertyNames().forEach((s)->
-                firstRow.add(new KeyboardButton(s)));
+        knownRequests.stringPropertyNames().forEach((request)->
+                firstRow.add(new KeyboardButton(request)));
         keyboard.add(firstRow);
 
         keyboardMarkup.setSelective(true)
-                 .setResizeKeyboard(true)
-                 .setOneTimeKeyboard(false)
-                 .setKeyboard(keyboard);
+                      .setResizeKeyboard(true)
+                      .setOneTimeKeyboard(false)
+                      .setKeyboard(keyboard);
         sendMessageService.setReplyMarkup(keyboardMarkup);
     }
 
