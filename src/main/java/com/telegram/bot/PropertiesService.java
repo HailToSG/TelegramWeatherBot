@@ -1,7 +1,10 @@
 package com.telegram.bot;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 /**
@@ -39,8 +42,12 @@ class PropertiesService {
      */
     private Properties getProperties(String filePath){
         Properties properties = new Properties();
+
         try {
-            properties.load(new FileInputStream(filePath));
+            BufferedReader bReader =
+                    new BufferedReader(new InputStreamReader(
+                            new FileInputStream(filePath), StandardCharsets.UTF_8));
+            properties.load(bReader);
         } catch (IOException e) {
             e.printStackTrace();
         }

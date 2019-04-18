@@ -19,14 +19,14 @@ import java.util.*;
  * Класс бота для получения погодных данных
  */
 public class WeatherBot extends TelegramLongPollingBot {
-    private Map<String, String> existingRequests = new HashMap<>();
+    private Properties knownRequests = new PropertiesService("known.requests.properties")
+            .getProperties();
     private Properties tokens =
             new PropertiesService("tokens.properties")
                    .getProperties();
 
     public static void main(String[] args) {
         SetSystemSettings();
-
         ApiContextInitializer.init();
         TelegramBotsApi botApi = new TelegramBotsApi();
 
@@ -62,9 +62,8 @@ public class WeatherBot extends TelegramLongPollingBot {
      * Обрабатывает команды, содержащие текст
      */
     private void processTextCommand(Message message) {
-        initKnownRequests(existingRequests);
         String command = message.getText();
-        answer(message, existingRequests.get(command));
+        answer(message, knownRequests.getProperty(command));
     }
 
     /**
@@ -76,7 +75,7 @@ public class WeatherBot extends TelegramLongPollingBot {
         List<KeyboardRow> keyboard = new ArrayList<>();
         KeyboardRow firstRow = new KeyboardRow();
 
-        existingRequests.forEach((s, s2)->
+        knownRequests.stringPropertyNames().forEach((s)->
                 firstRow.add(new KeyboardButton(s)));
         keyboard.add(firstRow);
 
@@ -105,7 +104,7 @@ public class WeatherBot extends TelegramLongPollingBot {
      * @return имя зарегистрированного бота
      */
     public String getBotUsername() {
-        return "WeatherBuddyBot";
+        return tokens.getProperty("telegram.bot.name");
     }
 
     /**
@@ -142,14 +141,5 @@ public class WeatherBot extends TelegramLongPollingBot {
                 .setText(answerText);
         createButtons(sendMessageService);
         return sendMessageService;
-    }
-
-    /**
-     * Инициализирует Map обрабатываемых запросов
-     * @param existingRequests Map обрабатываемых запросов
-     */
-    private void initKnownRequests (Map<String, String> existingRequests){
-        existingRequests.put("/help", "Чем я могу помочь?");
-        existingRequests.put("/settings", "Выберите настройку");
     }
 }
