@@ -43,14 +43,4 @@ class PropertiesService {
         }
         return properties;
     }
-
-    /**
-     * Возвращает проперти по имени
-     * @param propName имя проперти
-     * @return строка со значением
-     */
-    private String getProperty(String propName){
-        Properties properties = getProperties(propName);
-        return properties.getProperty(propName);
-    }
 }

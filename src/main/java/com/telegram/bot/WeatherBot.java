@@ -58,7 +58,7 @@ public class WeatherBot extends TelegramLongPollingBot {
         if(message != null && message.hasText()){
             processTextCommand(message);
         }
-        }
+    }
     /**
      * Обрабатывает команды, содержащие текст
      */
